@@ -4,6 +4,9 @@
 
 本レシピは、FaBo Arduinoで温度センサーの値をiBeaconで飛ばし、Swiftアプリで受信して表示するためのレシピです。
 
+![Recipe001](./img/recipe001.png)
+
+
 ## レシピの基礎マテリアル
 
 * Arduino
@@ -364,3 +367,551 @@ void loop()
 ![](./img/corelocation001.png)
 
 ![](./img/corelocation002.png)
+
+## MajorID 1を温度の情報と認識し、MinorIDを温度に反映させる
+
+## Swift 3.0
+
+```json
+<key>NSLocationAlwaysUsageDescription</key>
+<string>位置情報の取得を、常に許可しますか？</string>
+```
+
+プログラムの変更点
+```swift
+        // セキュリティ認証のステータスを取得.
+        let status = CLLocationManager.authorizationStatus()
+        print("authorizationStatus:\(status)");
+   
+        // まだ認証が得られていない場合は、認証ダイアログを表示
+        // (このAppの使用中のみ許可の設定)
+        if(status == notDetermined) {
+           self.myLocationManager.requestAlwaysAuthorization()
+        }
+
+```
+
+```swift
+//
+//
+//  ViewController.swift
+//  Recipe 001
+//
+//  Copyright © 2016年 FaBo, Inc. All rights reserved.
+//
+
+import UIKit
+import CoreLocation
+import AudioToolbox
+
+class ViewController: UIViewController, CLLocationManagerDelegate {
+    
+    var myLocationManager:CLLocationManager!
+    var myBeaconRegion:CLBeaconRegion!
+    var beaconUuids: NSMutableArray!
+    var beaconDetails: NSMutableArray!
+    var myLabel: UILabel!
+    
+    // 今回の検知対象は3つのUUID。(OS等のバージョンで検出可能な上限数は20個程度が目安)
+    let UUIDList = [
+        "9EDFA660-204E-4066-8644-A432AE2B6EC1"
+    ]
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // UILabel.
+        
+        // ボタンの生成.
+        let buttonWidth: CGFloat = 200
+        let buttonHeight: CGFloat = 200
+        let posX: CGFloat = (self.view.bounds.width - buttonWidth)/2
+        let posY: CGFloat = (self.view.bounds.height - buttonWidth)/2
+        myLabel = UILabel(frame: CGRect(x: posX, y: posY, width: buttonWidth, height: buttonHeight))
+        myLabel.backgroundColor = UIColor.orange
+        myLabel.layer.masksToBounds = true
+        myLabel.layer.cornerRadius = 100.0
+        myLabel.text = "N/D"
+        myLabel.textAlignment = .center
+        myLabel.textColor = UIColor.white
+        myLabel.font = UIFont.systemFont(ofSize: CGFloat(50))
+        self.view.addSubview(myLabel)
+        
+        // ロケーションマネージャの作成.
+        myLocationManager = CLLocationManager()
+        
+        // デリゲートを自身に設定.
+        myLocationManager.delegate = self
+        
+        // セキュリティ認証のステータスを取得
+        let status = CLLocationManager.authorizationStatus()
+        print("CLAuthorizedStatus: \(status)");
+        
+        // まだ認証が得られていない場合は、認証ダイアログを表示
+        if(status == .notDetermined) {
+            // [認証手順1] まだ承認が得られていない場合は、認証ダイアログを表示.
+            // [認証手順2] が呼び出される
+            myLocationManager.requestAlwaysAuthorization()
+        }
+    }
+    
+    /*
+     CoreLocationの利用許可が取れたらiBeaconの検出を開始する.
+     */
+    private func startMyMonitoring() {
+        
+        // UUIDListのUUIDを設定して、反応するようにする
+        for i in 0 ..< UUIDList.count {
+            
+            // BeaconのUUIDを設定.
+            let uuid: NSUUID! = NSUUID(uuidString: "\(UUIDList[i].lowercased())")
+            
+            // BeaconのIfentifierを設定.
+            let identifierStr: String = "fabo\(i)"
+            
+            // リージョンを作成.
+            myBeaconRegion = CLBeaconRegion(proximityUUID: uuid as UUID, identifier: identifierStr)
+            
+            // ディスプレイがOffでもイベントが通知されるように設定(trueにするとディスプレイがOnの時だけ反応).
+            myBeaconRegion.notifyEntryStateOnDisplay = false
+            
+            // 入域通知の設定.
+            myBeaconRegion.notifyOnEntry = true
+            
+            // 退域通知の設定.
+            myBeaconRegion.notifyOnExit = true
+            
+            // [iBeacon 手順1] iBeaconのモニタリング開始([iBeacon 手順2]がDelegateで呼び出される).
+            myLocationManager.startMonitoring(for: myBeaconRegion)
+        }
+    }
+    
+    /*
+     [認証手順2] 認証のステータスがかわったら呼び出される.
+     */
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        
+        print("didChangeAuthorizationStatus");
+        
+        // 認証のステータスをログで表示
+        switch (status) {
+        case .notDetermined:
+            print("未認証の状態")
+            break
+        case .restricted:
+            print("制限された状態")
+            break
+        case .denied:
+            print("許可しない")
+            break
+        case .authorizedAlways:
+            print("常に許可")
+            // 許可がある場合はiBeacon検出を開始.
+            startMyMonitoring()
+            break
+        case .authorizedWhenInUse:
+            print("このAppの使用中のみ許可")
+            // 許可がある場合はiBeacon検出を開始.
+            startMyMonitoring()
+            break
+        }
+    }
+    
+    /*
+     [iBeacon 手順2]  startMyMonitoring()内のでstartMonitoringForRegionが正常に開始されると呼び出される。
+     */
+    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+        
+        print("[iBeacon 手順2] didStartMonitoringForRegion");
+        
+        // [iBeacon 手順3] この時点でビーコンがすでにRegion内に入っている可能性があるので、その問い合わせを行う
+        // [iBeacon 手順4] がDelegateで呼び出される.
+        manager.requestState(for: region);
+    }
+    
+    /*
+     [iBeacon 手順4] 現在リージョン内にiBeaconが存在するかどうかの通知を受け取る.
+     */
+    func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
+        
+        print("[iBeacon 手順4] locationManager: didDetermineState \(state)")
+        
+        switch (state) {
+            
+        case .inside: // リージョン内にiBeaconが存在いる
+            print("iBeaconが存在!");
+            
+            // [iBeacon 手順5] すでに入っている場合は、そのままiBeaconのRangingをスタートさせる。
+            // [iBeacon 手順6] がDelegateで呼び出される.
+            // iBeaconがなくなったら、Rangingを停止する
+            manager.startRangingBeacons(in: region as! CLBeaconRegion)
+            break;
+            
+        case .outside:
+            print("iBeaconが圏外!")
+            // 外にいる、またはUknownの場合はdidEnterRegionが適切な範囲内に入った時に呼ばれるため処理なし。
+            break;
+            
+        case .unknown:
+            print("iBeaconが圏外もしくは不明な状態!")
+            // 外にいる、またはUknownの場合はdidEnterRegionが適切な範囲内に入った時に呼ばれるため処理なし。
+            break;
+            
+        }
+    }
+    
+    /*
+     [iBeacon 手順6] 現在取得しているiBeacon情報一覧が取得できる.
+     iBeaconを検出していなくても1秒ごとに呼ばれる.
+     */
+    func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
+        
+        // 範囲内で検知されたビーコンはこのbeaconsにCLBeaconオブジェクトとして格納される
+        // rangingが開始されると１秒毎に呼ばれるため、beaconがある場合のみ処理をするようにすること.
+        if(beacons.count > 0){
+            
+            // STEP7: 発見したBeaconの数だけLoopをまわす
+            for i in 0 ..< beacons.count {
+                
+                let beacon = beacons[i]
+                
+                let beaconUUID = beacon.proximityUUID;
+                let minorID = beacon.minor;
+                let majorID = beacon.major;
+                let rssi = beacon.rssi;
+                
+                
+                var proximity = ""
+                
+                switch (beacon.proximity) {
+                    
+                case CLProximity.unknown :
+                    print("Proximity: Unknown");
+                    proximity = "Unknown"
+                    break
+                    
+                case CLProximity.far:
+                    print("Proximity: Far");
+                    proximity = "Far"
+                    break
+                    
+                case CLProximity.near:
+                    print("Proximity: Near");
+                    proximity = "Near"
+                    break
+                    
+                case CLProximity.immediate:
+                    print("Proximity: Immediate");
+                    proximity = "Immediate"
+                    break
+                }
+                
+                // majorIDが1の場合は、温度を乗せたBeacon情報
+                if(majorID == 1) {
+                    myLabel.text = "\(minorID)℃"
+                    myLabel.reloadInputViews()
+                }
+            }
+        }
+    }
+    
+    /*
+     [iBeacon イベント] iBeaconを検出した際に呼ばれる.
+     */
+    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        print("didEnterRegion: iBeaconが圏内に発見されました。");
+        
+        // Rangingを始める (Ranginghあ1秒ごとに呼ばれるので、検出中のiBeaconがなくなったら止める)
+        manager.startRangingBeacons(in: region as! CLBeaconRegion)
+        
+    }
+    
+    /*
+     [iBeacon イベント] iBeaconを喪失した際に呼ばれる. 喪失後 15-30秒ぐらいあとに呼び出される.
+     */
+    func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+        print("didExitRegion: iBeaconが圏外に喪失されました。");
+        
+        // 検出中のiBeaconが存在しないのなら、iBeaconのモニタリングを終了する.
+        if(beaconUuids.count == 0) {
+            manager.stopRangingBeacons(in: region as! CLBeaconRegion)
+        }
+    }
+    
+}
+```
+
+
+### Swift 2.3
+
+info.plist
+
+```json
+<key>NSLocationAlwaysUsageDescription</key>
+<string>位置情報の取得を、常に許可しますか？</string>
+```
+
+プログラムの変更点
+```swift
+        // セキュリティ認証のステータスを取得.
+        let status = CLLocationManager.authorizationStatus()
+        print("authorizationStatus:\(status)");
+   
+        // まだ認証が得られていない場合は、認証ダイアログを表示
+        // (このAppの使用中のみ許可の設定)
+        if(status == notDetermined) {
+           self.myLocationManager.requestAlwaysAuthorization()
+        }
+
+```
+
+
+```swift
+//
+//
+//  ViewController.swift
+//  Recipe 001
+//
+//  Copyright © 2016年 FaBo, Inc. All rights reserved.
+//
+
+import UIKit
+import CoreLocation
+import AudioToolbox
+
+class ViewController: UIViewController, CLLocationManagerDelegate {
+    
+    var myLocationManager:CLLocationManager!
+    var myBeaconRegion:CLBeaconRegion!
+    var beaconUuids: NSMutableArray!
+    var beaconDetails: NSMutableArray!
+    var myLabel: UILabel!
+
+    // 今回の検知対象は3つのUUID。(OS等のバージョンで検出可能な上限数は20個程度が目安)
+    let UUIDList = [
+        "9EDFA660-204E-4066-8644-A432AE2B6EC1"
+        ]
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // UILabel.
+        
+        // ボタンの生成.
+        let buttonWidth: CGFloat = 200
+        let buttonHeight: CGFloat = 200
+        let posX: CGFloat = (self.view.bounds.width - buttonWidth)/2
+        let posY: CGFloat = (self.view.bounds.height - buttonWidth)/2
+        myLabel = UILabel(frame: CGRect(x: posX, y: posY, width: buttonWidth, height: buttonHeight))
+        myLabel.backgroundColor = UIColor.orangeColor()
+        myLabel.layer.masksToBounds = true
+        myLabel.layer.cornerRadius = 100.0
+        myLabel.text = "N/D"
+        myLabel.textAlignment = .Center
+        myLabel.textColor = UIColor.whiteColor()
+        myLabel.font = UIFont.systemFontOfSize(CGFloat(50))
+        self.view.addSubview(myLabel)
+        
+        // ロケーションマネージャの作成.
+        myLocationManager = CLLocationManager()
+        
+        // デリゲートを自身に設定.
+        myLocationManager.delegate = self
+        
+        // セキュリティ認証のステータスを取得
+        let status = CLLocationManager.authorizationStatus()
+        print("CLAuthorizedStatus: \(status)");
+
+        // まだ認証が得られていない場合は、認証ダイアログを表示
+        if(status == .NotDetermined) {
+            // [認証手順1] まだ承認が得られていない場合は、認証ダイアログを表示.
+            // [認証手順2] が呼び出される
+            myLocationManager.requestAlwaysAuthorization()
+        }
+    }
+    
+    /*
+     CoreLocationの利用許可が取れたらiBeaconの検出を開始する.
+    */
+    private func startMyMonitoring() {
+        
+        // UUIDListのUUIDを設定して、反応するようにする
+        for i in 0 ..< UUIDList.count {
+            
+            // BeaconのUUIDを設定.
+            let uuid: NSUUID! = NSUUID(UUIDString: "\(UUIDList[i].lowercaseString)")
+
+            // BeaconのIfentifierを設定.
+            let identifierStr: String = "fabo\(i)"
+            
+            // リージョンを作成.
+            myBeaconRegion = CLBeaconRegion(proximityUUID: uuid, identifier: identifierStr)
+            
+            // ディスプレイがOffでもイベントが通知されるように設定(trueにするとディスプレイがOnの時だけ反応).
+            myBeaconRegion.notifyEntryStateOnDisplay = false
+            
+            // 入域通知の設定.
+            myBeaconRegion.notifyOnEntry = true
+            
+            // 退域通知の設定.
+            myBeaconRegion.notifyOnExit = true
+            
+            // [iBeacon 手順1] iBeaconのモニタリング開始([iBeacon 手順2]がDelegateで呼び出される).
+            myLocationManager.startMonitoringForRegion(myBeaconRegion)
+        }
+    }
+    
+    /*
+      [認証手順2] 認証のステータスがかわったら呼び出される.
+     */
+    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+        
+        print("didChangeAuthorizationStatus");
+        
+        // 認証のステータスをログで表示
+        switch (status) {
+        case .NotDetermined:
+            print("未認証の状態")
+            break
+        case .Restricted:
+            print("制限された状態")
+            break
+        case .Denied:
+            print("許可しない")
+            break
+        case .AuthorizedAlways:
+            print("常に許可")
+            // 許可がある場合はiBeacon検出を開始.
+            startMyMonitoring()
+            break
+        case .AuthorizedWhenInUse:
+            print("このAppの使用中のみ許可")
+            // 許可がある場合はiBeacon検出を開始.
+            startMyMonitoring()
+            break
+        }
+    }
+    
+    /*
+     [iBeacon 手順2]  startMyMonitoring()内のでstartMonitoringForRegionが正常に開始されると呼び出される。
+     */
+    func locationManager(manager: CLLocationManager, didStartMonitoringForRegion region: CLRegion) {
+        
+        print("[iBeacon 手順2] didStartMonitoringForRegion");
+        
+        // [iBeacon 手順3] この時点でビーコンがすでにRegion内に入っている可能性があるので、その問い合わせを行う
+        // [iBeacon 手順4] がDelegateで呼び出される.
+        manager.requestStateForRegion(region);
+    }
+    
+    /*
+     [iBeacon 手順4] 現在リージョン内にiBeaconが存在するかどうかの通知を受け取る.
+     */
+    func locationManager(manager: CLLocationManager, didDetermineState state: CLRegionState, forRegion region: CLRegion) {
+        
+        print("[iBeacon 手順4] locationManager: didDetermineState \(state)")
+        
+        switch (state) {
+            
+        case .Inside: // リージョン内にiBeaconが存在いる
+            print("iBeaconが存在!");
+            
+            // [iBeacon 手順5] すでに入っている場合は、そのままiBeaconのRangingをスタートさせる。
+            // [iBeacon 手順6] がDelegateで呼び出される.
+            // iBeaconがなくなったら、Rangingを停止する
+            manager.startRangingBeaconsInRegion(region as! CLBeaconRegion)
+            break;
+            
+        case .Outside:
+            print("iBeaconが圏外!")
+            // 外にいる、またはUknownの場合はdidEnterRegionが適切な範囲内に入った時に呼ばれるため処理なし。
+            break;
+            
+        case .Unknown:
+            print("iBeaconが圏外もしくは不明な状態!")
+            // 外にいる、またはUknownの場合はdidEnterRegionが適切な範囲内に入った時に呼ばれるため処理なし。
+            break;
+            
+        }
+    }
+    
+    /*
+     [iBeacon 手順6] 現在取得しているiBeacon情報一覧が取得できる.
+     iBeaconを検出していなくても1秒ごとに呼ばれる.
+     */
+    func locationManager(manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], inRegion region: CLBeaconRegion) {
+        
+        // 範囲内で検知されたビーコンはこのbeaconsにCLBeaconオブジェクトとして格納される
+        // rangingが開始されると１秒毎に呼ばれるため、beaconがある場合のみ処理をするようにすること.
+        if(beacons.count > 0){
+            
+            // STEP7: 発見したBeaconの数だけLoopをまわす
+            for i in 0 ..< beacons.count {
+                
+                let beacon = beacons[i]
+                
+                let beaconUUID = beacon.proximityUUID;
+                let minorID = beacon.minor;
+                let majorID = beacon.major;
+                let rssi = beacon.rssi;
+                
+        
+                var proximity = ""
+                
+                switch (beacon.proximity) {
+                    
+                case CLProximity.Unknown :
+                    print("Proximity: Unknown");
+                    proximity = "Unknown"
+                    break
+                    
+                case CLProximity.Far:
+                    print("Proximity: Far");
+                    proximity = "Far"
+                    break
+                    
+                case CLProximity.Near:
+                    print("Proximity: Near");
+                    proximity = "Near"
+                    break
+                    
+                case CLProximity.Immediate:
+                    print("Proximity: Immediate");
+                    proximity = "Immediate"
+                    break
+                }
+                
+                // majorIDが1の場合は、温度を乗せたBeacon情報
+                if(majorID == 1) {
+                    myLabel.text = "\(minorID)℃"
+                    myLabel.reloadInputViews()
+                }
+            }
+        }
+    }
+    
+    /*
+     [iBeacon イベント] iBeaconを検出した際に呼ばれる.
+     */
+    func locationManager(manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        print("didEnterRegion: iBeaconが圏内に発見されました。");
+        
+        // Rangingを始める (Ranginghあ1秒ごとに呼ばれるので、検出中のiBeaconがなくなったら止める)
+        manager.startRangingBeaconsInRegion(region as! CLBeaconRegion)
+        
+    }
+    
+    /*
+     [iBeacon イベント] iBeaconを喪失した際に呼ばれる. 喪失後 15-30秒ぐらいあとに呼び出される.
+     */
+    func locationManager(manager: CLLocationManager, didExitRegion region: CLRegion) {
+        print("didExitRegion: iBeaconが圏外に喪失されました。");
+        
+        // 検出中のiBeaconが存在しないのなら、iBeaconのモニタリングを終了する.
+        if(beaconUuids.count == 0) {
+            manager.stopRangingBeaconsInRegion(region as! CLBeaconRegion)
+        }
+    }
+    
+}
+```
