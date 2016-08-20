@@ -358,6 +358,9 @@ void loop()
 
 [[Swift Docs] iBeaconでモニタリング](http://docs.fabo.io/swift/corelocation/003_ibeacon_monitaring.html)　で、サンプルを実行し、値を確認してみる。
 
+
+![](./img/corelocation003.png)
+
 ![](./img/corelocation001.png)
 
 ![](./img/corelocation002.png)
