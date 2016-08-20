@@ -1,25 +1,26 @@
-# [Recipe 001] 
-# iBeaconで温度を飛ばしiPhoneアプリで受信する
+# [Recipe 001] iBeaconで温度を飛ばしiPhoneアプリで受信する
 
-## 本レシピについて
+# 本レシピについて
 
 本レシピは、FaBo Arduinoで温度センサーの値をiBeaconで飛ばし、Swiftアプリで受信して表示するためのレシピです。
 
 ## レシピの基礎マテリアル
 
 * Arduino
-* [http://docs.fabo.io/fabo/arduino/outin/501_shield_outin_arduino.html]([FaBo Docs]#501 Shield Outin Arduino)
-* [http://docs.fabo.io/fabo/arduino/brick_analog/108_brick_analog_temperature.html]([FaBo Docs]#108 FaBo Temperature)
-* [http://docs.fabo.io/fabo/arduino/brick_serial/307_brick_serial_nordic.html]([FaBo Docs]#307 FaBo Nordic BLE)
-* [http://docs.fabo.io/swift/corelocation/003_ibeacon_monitaring.html]([Swift Docs]iBeaconをモニタリングする)
+* [[FaBo Docs]#501 Shield Outin Arduino](http://docs.fabo.io/fabo/arduino/outin/501_shield_outin_arduino.html)
+* [[FaBo Docs]#108 FaBo Temperature](http://docs.fabo.io/fabo/arduino/brick_analog/108_brick_analog_temperature.html)
+* [[FaBo Docs]#307 FaBo Nordic BLE](http://docs.fabo.io/fabo/arduino/brick_serial/307_brick_serial_nordic.html)
+* [[Swift Docs]iBeaconをモニタリングする](http://docs.fabo.io/swift/corelocation/003_ibeacon_monitaring.html)
 
 ## 本レシピで使用するハードウェア
 
-* Arduino
-* [http://www.fabo.io/501.html](#501 Shield Outin Arduino)
-* [http://www.fabo.io/108.html](#108 FaBo Temperature)
-* [http://www.fabo.io/307.html](#307 FaBo Nordic BLE)
+* [Arduino](https://www.arduino.cc/)
+* [#501 Shield Outin Arduino](http://www.fabo.io/501.html)
+* [#108 FaBo Temperature](http://www.fabo.io/108.html)
+* [#307 FaBo Nordic BLE](http://www.fabo.io/307.html])
 * iPhone
+
+# [手順1] FaBoで温度を取得
 
 ## Arduinoのインストール
 
@@ -91,10 +92,12 @@ Arduino/Geduino Uno以外のボードを使用する場合は、そのボード�
 
 ![](./img/beacon010.png)
 
-# 温度を測る
+# [手順2] 温度を測る
 
+## 温度を測るコードを作成する
 
 ![](./img/beacon007.jpg)
+
 
 ```c
 //
@@ -102,7 +105,6 @@ Arduino/Geduino Uno以外のボードを使用する場合は、そのボード�
 //
 // #108 Temperature Brick
 //
-
 #define tempPin A0 // 温度センサーピン
 
 int tempValue = 0; // 温度取得用
@@ -144,15 +146,14 @@ Arduinoのメニューから[ツール]-[シリアルプロッタ]を選択し�
 
 ![](./img/beacon013.png)
 
-# BLEモジュール
-
-
+# [手順3] BLE BrickでiBeaconをアドバタイジング
 
 ![](./img/beacon014.png)
 
 ![](./img/beacon015.png)
 
 ![](./img/beacon016.png)
+
 
 ```c
 //
@@ -229,10 +230,9 @@ void loop()
 ```
 
 
-## 温度をBeaconに乗せておくる
+# [手順4] iBeaconのMinorに温度を乗せてアドバタイジング
 
 ![](./img/ble_pre.png)
-
 
 ![](./img/int001.png)
 
@@ -345,3 +345,7 @@ void loop()
   delay(100);
 }
 ```
+
+# Swiftアプリで受信
+
+
