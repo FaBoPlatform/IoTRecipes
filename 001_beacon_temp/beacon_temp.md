@@ -1,4 +1,25 @@
-# Recipe 001 iBeaconで温度を飛ばしiPhoneアプリで受信する
+# [Recipe 001] 
+# iBeaconで温度を飛ばしiPhoneアプリで受信する
+
+## 本レシピについて
+
+本レシピは、FaBo Arduinoで温度センサーの値をiBeaconで飛ばし、Swiftアプリで受信して表示するためのレシピです。
+
+## レシピの基礎マテリアル
+
+* Arduino
+* [http://docs.fabo.io/fabo/arduino/outin/501_shield_outin_arduino.html]([FaBo Docs]#501 Shield Outin Arduino)
+* [http://docs.fabo.io/fabo/arduino/brick_analog/108_brick_analog_temperature.html]([FaBo Docs]#108 FaBo Temperature)
+* [http://docs.fabo.io/fabo/arduino/brick_serial/307_brick_serial_nordic.html]([FaBo Docs]#307 FaBo Nordic BLE)
+* [http://docs.fabo.io/swift/corelocation/003_ibeacon_monitaring.html]([Swift Docs]iBeaconをモニタリングする)
+
+## 本レシピで使用するハードウェア
+
+* Arduino
+* [http://www.fabo.io/501.html](#501 Shield Outin Arduino)
+* [http://www.fabo.io/108.html](#108 FaBo Temperature)
+* [http://www.fabo.io/307.html](#307 FaBo Nordic BLE)
+* iPhone
 
 ## Arduinoのインストール
 
