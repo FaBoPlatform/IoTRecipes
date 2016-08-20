@@ -14,6 +14,8 @@
 
 ## 本レシピで使用するハードウェア
 
+[Hardware List](./img/hardware_list.png)
+
 * [Arduino](https://www.arduino.cc/)
 * [#501 Shield Outin Arduino](http://www.fabo.io/501.html)
 * [#108 FaBo Temperature](http://www.fabo.io/108.html)
