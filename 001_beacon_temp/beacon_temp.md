@@ -244,6 +244,10 @@ void loop()
 
 ![](./img/int004.png)
 
+UUIDを下記の値に設定します。
+
+> 9EDFA660-204E-4066-8644-A432AE2B6EC2
+
 
 ```c
 //
@@ -257,8 +261,8 @@ void loop()
 #define USER_ID 1 // ユーザ別に変える
 #define tempPin A0 // 温度センサーピン
 int tempValue = 0; // 温度取得用
-byte UUID[] = {0x48, 0x53, 0x44, 0x42,  0x4c, 0x45,  0x41, 0x44, 0x80, 0xc0, 0x18, 0x00, 0xff, 0xff, 0xff, 0xff};
-
+// 9EDFA660-204E-4066-8644-A432AE2B6EC2
+byte UUID[] = {0x9E, 0xDF, 0xA6, 0x60,  0x20, 0x4E, 0x40, 0x66, 0x86, 0x44, 0xA4, 0x32, 0xAE, 0x2B, 0x6E, 0xEC1};
 SoftwareSerial serial(12, 13);
 FaboBLE faboBLE(serial);
 
@@ -350,4 +354,10 @@ void loop()
 
 # Swiftアプリで受信
 
+## Swift Docsのサンプルで受信データを確認してみる
 
+[[Swift Docs] iBeaconでモニタリング](http://docs.fabo.io/swift/corelocation/003_ibeacon_monitaring.html)　で、サンプルを実行し、値を確認してみる。
+
+![](./img/corelocation001.png)
+
+![](./img/corelocation002.png)
