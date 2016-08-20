@@ -621,13 +621,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
         print("didEnterRegion: iBeaconが圏内に発見されました。");
         
-        // Rangingを始める (Ranginghあ1秒ごとに呼ばれるので、検出中のiBeaconがなくなったら止める)
+        // Rangingを始める (Rangingは1秒ごとに呼ばれるので、検出中のiBeaconがなくなったら止める)
         manager.startRangingBeacons(in: region as! CLBeaconRegion)
         
     }
     
     /*
-     [iBeacon イベント] iBeaconを喪失した際に呼ばれる. 喪失後 15-30秒ぐらいあとに呼び出される.
+     [iBeacon イベント] iBeaconを喪失した際に呼ばれる. 喪失後 30秒ぐらいあとに呼び出される.
      */
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         print("didExitRegion: iBeaconが圏外に喪失されました。");
@@ -896,13 +896,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     func locationManager(manager: CLLocationManager, didEnterRegion region: CLRegion) {
         print("didEnterRegion: iBeaconが圏内に発見されました。");
         
-        // Rangingを始める (Ranginghあ1秒ごとに呼ばれるので、検出中のiBeaconがなくなったら止める)
+        // Rangingを始める (Rangingは1秒ごとに呼ばれるので、検出中のiBeaconがなくなったら止める)
         manager.startRangingBeaconsInRegion(region as! CLBeaconRegion)
         
     }
     
     /*
-     [iBeacon イベント] iBeaconを喪失した際に呼ばれる. 喪失後 15-30秒ぐらいあとに呼び出される.
+     [iBeacon イベント] iBeaconを喪失した際に呼ばれる. 喪失後 30秒ぐらいあとに呼び出される.
      */
     func locationManager(manager: CLLocationManager, didExitRegion region: CLRegion) {
         print("didExitRegion: iBeaconが圏外に喪失されました。");
