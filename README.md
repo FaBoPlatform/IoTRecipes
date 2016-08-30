@@ -1,6 +1,8 @@
 IoT Recipes
 =======
 
+![](/img/title_recipes.png)
+
 # 本ドキュメントについて
 
 本ドキュメントは、FaBo, iPhoneアプリ(Swift), Android(Java), AWSを連携したレシピ集です。
